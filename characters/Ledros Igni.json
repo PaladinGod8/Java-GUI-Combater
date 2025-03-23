@@ -1,0 +1,20 @@
+{
+  "name": "Ledros Igni",
+  "initiative": 14,
+  "hitPoints": {
+    "maxValue": 20,
+    "curValue": 20
+  },
+  "manaPoints": {
+    "maxValue": 20,
+    "curValue": 20
+  },
+  "actionPoints": {
+    "maxValue": 3,
+    "curValue": 3
+  },
+  "trueAC": 0,
+  "shield": [],
+  "armour": [],
+  "overhealHitPoints": 0
+}

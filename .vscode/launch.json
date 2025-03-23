@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Run CombatTracker (Manual CP)",
+      "request": "launch",
+      "mainClass": "app.CombatTracker",
+      "cwd": "${workspaceFolder}",
+      "vmArgs": "-cp bin;lib\\gson-2.8.9.jar",
+      "preLaunchTask": "build"
+    }
+  ]
+}
