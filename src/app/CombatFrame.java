@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 import javax.swing.*;
+import javax.swing.plaf.basic.BasicScrollBarUI;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -232,10 +233,10 @@ public class CombatFrame extends JFrame {
                 // Parse and add armour layers
                 //add layers in increasing order (L->R)-> first armour is first layer. 
                 String[] armourValues = armourLayersField.getText().split(",");
-                // List<String> armourValuesList = Arrays.asList(armourValues); 
-                // Collections.reverse(armourValuesList); //reverse the array. 
+                List<String> armourValuesList = Arrays.asList(armourValues); 
+                Collections.reverse(armourValuesList); //reverse the array. 
         
-                for (String value : armourValues) {
+                for (String value : armourValuesList) {
                     value = value.trim();
                     if (!value.isEmpty()) {
                         int armourMax = Integer.parseInt(value);
@@ -246,7 +247,9 @@ public class CombatFrame extends JFrame {
                 // Parse and add shield layers
                 //add layers in increasing order (L->R) -> first shield is first layer. 
                 String[] shieldValues = shieldLayersField.getText().split(",");
-                for (String value : shieldValues) {
+                List<String> shieldValuesList = Arrays.asList(shieldValues); 
+                Collections.reverse(shieldValuesList); //reverse the array. 
+                for (String value : shieldValuesList) {
                     value = value.trim();
                     if (!value.isEmpty()) {
                         int shieldCurrent = Integer.parseInt(value);
@@ -315,7 +318,7 @@ public class CombatFrame extends JFrame {
 
             } 
 
-            attacker.getAP().modifyCurrent(-1);
+            spendActionPoint(attacker, -1);
             target.takeDamage(damage);  // assume you have takeDamage logic that applies shield, armor, HP
     
             // Show attack result
@@ -335,6 +338,11 @@ public class CombatFrame extends JFrame {
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(this, "Invalid damage value!");
         }
+    }
+
+    private void spendActionPoint(Combatant c, int apSpentModified) {
+        c.getAP().modifyCurrent(apSpentModified);
+        updateStatDisplay(c);
     }
 
     private void updateStatDisplay(Combatant combatant) {
@@ -435,6 +443,65 @@ public class CombatFrame extends JFrame {
         hpLabel.setText("HP: " + combatant.getHP().getCurrent() + "/" + combatant.getHP().getMax());
         statsPanel.add(hpLabel, gbc);
 
+        //AP Meter: 
+        APMeterPanel apMeter = new APMeterPanel(combatant.getAP());
+        int maxAPBeforeClipping = 10;                              //pseudo-const: 
+        JComponent apComponent;
+        if (combatant.getAP().getMax() >= maxAPBeforeClipping) {
+            JScrollPane apScrollPane = new JScrollPane(apMeter, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+            // apScrollPane.setViewportView(apMeter);
+            apScrollPane.setWheelScrollingEnabled(true);
+            apScrollPane.setPreferredSize(new Dimension(30, 150)); // less than panel height
+            apScrollPane.setBorder(null);                          // optional for clean look
+            apScrollPane.getVerticalScrollBar().setOpaque(false);
+
+            // Optional: transparent scrollbar styling
+            // apScrollPane.getVerticalScrollBar().setUI(new BasicScrollBarUI() {
+            //     @Override
+            //     protected void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
+            //         g.setColor(new Color(0, 0, 0, 0));
+            //         g.fillRect(thumbBounds.x, thumbBounds.y, thumbBounds.width, thumbBounds.height);
+            //     }
+
+            //     @Override
+            //     protected void paintTrack(Graphics g, JComponent c, Rectangle trackBounds) {
+            //         g.setColor(new Color(0, 0, 0, 0));
+            //         g.fillRect(trackBounds.x, trackBounds.y, trackBounds.width, trackBounds.height);
+            //     }
+
+            //     @Override
+            //     protected JButton createDecreaseButton(int orientation) {
+            //         return createZeroButton();
+            //     }
+
+            //     @Override
+            //     protected JButton createIncreaseButton(int orientation) {
+            //         return createZeroButton();
+            //     }
+
+            //     private JButton createZeroButton() {
+            //         JButton button = new JButton();
+            //         button.setPreferredSize(new Dimension(0, 0));
+            //         button.setMinimumSize(new Dimension(0, 0));
+            //         button.setMaximumSize(new Dimension(0, 0));
+            //         button.setVisible(false);
+            //         return button;
+            //     }
+            // });
+            
+            apComponent = apScrollPane;
+
+        } else {
+            apComponent = apMeter;
+        }
+        
+        gbc.gridx = 2;
+        gbc.gridy = 0;
+        gbc.gridheight = GridBagConstraints.REMAINDER;
+        gbc.anchor = GridBagConstraints.NORTHEAST;
+        gbc.fill = GridBagConstraints.VERTICAL;
+        gbc.weighty = 1;
+        statsPanel.add(apComponent, gbc);
 
         // Final refresh
         statsPanel.revalidate();
@@ -917,5 +984,55 @@ class CombatantWrapper {
             .count() + 1;
 
         return c.getName() + " #" + instanceNumber;
+    }
+}
+
+class APMeterPanel extends JPanel {
+    private Statistic AP; 
+
+    public APMeterPanel(Statistic AP) {
+        this.AP = AP; 
+        setPreferredSize(new Dimension(20, 100)); // base size, adjusts
+    }
+
+    public void setAP(Statistic AP) {
+        this.AP = AP; 
+        repaint();
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+
+        if(this.AP == null) { 
+            return; 
+        }
+
+        int max = AP.getMax();
+        int cur = AP.getCurrent();
+        int spacing = Math.max(2, 12 - max);
+
+        int availableHeight = getHeight();
+        int totalSpacing = spacing * (max - 1);
+        int diameter = Math.max(6, (availableHeight - totalSpacing) / max); // never go smaller than 6px
+
+        for (int i = 0; i < max; i++) {
+            int y = i * (diameter + spacing);
+            g.setColor(i < max - cur ? Color.GRAY : Color.GREEN); //spent or available 
+            g.fillOval((getWidth() - diameter) / 2, y, diameter, diameter);
+        }
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+        if (this.AP == null) return new Dimension(30, 100);
+    
+        int max = this.AP.getMax();
+        int spacing = 4;
+        int diameter = 12;
+    
+        int height = max * diameter + (max - 1) * spacing;
+    
+        return new Dimension(30, height); // must be taller than scroll viewport to enable scroll
     }
 }
