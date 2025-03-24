@@ -8,7 +8,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Stack;
 import javax.swing.*;
 
@@ -17,8 +19,8 @@ import com.google.gson.GsonBuilder;
 import java.util.Random;
 
 public class CombatFrame extends JFrame {
-    private DefaultListModel<String> initiativeListModel;
-    private JList<String> initiativeList;
+    private DefaultListModel<Combatant> initiativeListModel;
+    private JList<Combatant> initiativeList;
     private ArrayList<Combatant> combatants;
     private JButton nextTurnButton;
     private int turnIndex = 0; // Tracks whose turn it is
@@ -42,8 +44,8 @@ public class CombatFrame extends JFrame {
     private JPanel shieldPanel;
     private JPanel armourPanel;
 
+    private final Map<String, Integer> instanceCounters = new HashMap<>();
     private Combatant selectedCombatant = null;
-    private boolean isManuallySelected = false;
 
     public CombatFrame() {
         setTitle("D&D Initiative Tracker");
@@ -132,22 +134,41 @@ public class CombatFrame extends JFrame {
         nextTurnButton.addActionListener(e -> nextTurn());
         removeButton.addActionListener(e -> removeCombatant());
         resetButton.addActionListener(e -> resetCombat());
-        attackButton.addActionListener(e -> manuallyAttackCombatant());
+        attackButton.addActionListener(e -> {
+            if(selectedCombatant == null || combatants.isEmpty()) { 
+                return; 
+            }
+
+            List<CombatantWrapper> options = combatants.stream()
+                                                       .filter(c -> c != selectedCombatant)
+                                                       .map(c -> new CombatantWrapper(c, combatants))
+                                                       .toList();
+
+            CombatantWrapper selected = (CombatantWrapper) JOptionPane.showInputDialog(
+                this,
+                "Select a target to attack:",
+                "Choose Target",
+                JOptionPane.PLAIN_MESSAGE,
+                null,
+                options.toArray(),
+                null
+            );
+
+            if (selected != null) {
+                manuallyAttackCombatant(selectedCombatant, selected.c);
+                updateInitiativeList(); // Refresh after damage
+            }
+        });
         createCharBtn.addActionListener(e -> openCharacterCreator());
         loadCharBtn.addActionListener(e -> openCharacterLoader());
         editCharBtn.addActionListener(e -> openCharacterEditor());
 
         initiativeList.addListSelectionListener(e -> {
-            int index = initiativeList.getSelectedIndex(); 
-            if(index >= 0 && index < combatants.size()) { 
-                selectedCombatant = combatants.get(index); 
-                isManuallySelected = true; 
-                updateStatDisplay(selectedCombatant);
-            }
-
-            int selectedIndex = initiativeList.getSelectedIndex();
-            if (selectedIndex != -1 && selectedIndex < combatants.size()) {
-                updateStatDisplay(combatants.get(selectedIndex));
+            if (!e.getValueIsAdjusting()) {
+                Combatant selected = initiativeList.getSelectedValue();
+                if (selected != null) {
+                    updateStatDisplay(selected); // Only updates display
+                }
             }
         });
 
@@ -211,8 +232,8 @@ public class CombatFrame extends JFrame {
                 // Parse and add armour layers
                 //add layers in increasing order (L->R)-> first armour is first layer. 
                 String[] armourValues = armourLayersField.getText().split(",");
-                List<String> armourValuesList = Arrays.asList(armourValues); 
-                Collections.reverse(armourValuesList); //reverse the array. 
+                // List<String> armourValuesList = Arrays.asList(armourValues); 
+                // Collections.reverse(armourValuesList); //reverse the array. 
         
                 for (String value : armourValues) {
                     value = value.trim();
@@ -236,7 +257,14 @@ public class CombatFrame extends JFrame {
                 }
 
                 combatants.add(combatant);
+                if (combatants.size() == 1) {
+                    turnIndex = 0;
+                    selectedCombatant = combatant;
+                }
+                
                 updateInitiativeList();
+                updateStatDisplay(selectedCombatant);
+                initiativeList.setSelectedValue(selectedCombatant, true);
 
             } catch (NumberFormatException e) {
                 JOptionPane.showMessageDialog(this, "Invalid input!", "Error", JOptionPane.ERROR_MESSAGE);
@@ -254,52 +282,32 @@ public class CombatFrame extends JFrame {
         }
     }
 
-    private void manuallyAttackCombatant() {
+    private void manuallyAttackCombatant(Combatant attacker, Combatant target) {
+        if(attacker == null || target == null || attacker == target) { 
+            JOptionPane.showMessageDialog(this, "Invalid attacker or target!", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
         if (combatants.size() < 2) {
             JOptionPane.showMessageDialog(this, "Not enough combatants for an attack!", "Error", JOptionPane.ERROR_MESSAGE);
             return;
 
         } 
     
-        Combatant attacker = combatants.get(turnIndex);
-        
         if(attacker.getAP().getCurrent() <= 0) { 
             JOptionPane.showMessageDialog(this, "Not enough Action Points!", "Error", JOptionPane.ERROR_MESSAGE);
             return;
 
         }
 
-        // Select a target (excluding self)
-        String[] targetNames = combatants.stream()
-                                         .filter(c -> !c.equals(attacker))
-                                         .map(Combatant::getName)
-                                         .toArray(String[]::new);
-    
-        String targetName = (String) JOptionPane.showInputDialog(this, "Select a target:", "Attack", JOptionPane.QUESTION_MESSAGE, null, targetNames, targetNames[0]);
-    
-        if (targetName == null) { 
-            return;     
-        }
-    
-        // Find the target in the list
-        Combatant target = combatants.stream()
-                                     .filter(c -> c.getName().equals(targetName))
-                                     .findFirst()
-                                     .orElse(null);
-    
-        if (target == null) { 
+        // Ask for damage value
+        String input = JOptionPane.showInputDialog(this, "How much damage does " + attacker.getName() + " deal?");
+        if (input == null) {
             return; 
-        }    
-    
-        // Ask user to enter the damage
-        JTextField damageField = new JTextField();
-        Object[] message = {"Enter damage amount:", damageField};
-        
-        int option = JOptionPane.showConfirmDialog(this, message, "Enter Damage", JOptionPane.OK_CANCEL_OPTION);
-        if (option != JOptionPane.OK_OPTION) return;
-    
+        }
+
         try {
-            int damage = Integer.parseInt(damageField.getText());
+            int damage = Integer.parseInt(input.trim());
     
             if (damage < 0) {
                 JOptionPane.showMessageDialog(this, "Damage cannot be negative!", "Error", JOptionPane.ERROR_MESSAGE);
@@ -308,22 +316,24 @@ public class CombatFrame extends JFrame {
             } 
 
             attacker.getAP().modifyCurrent(-1);
-            target.takeDamage(damage);
-            updateStatDisplay(target);  // Update UI bars
+            target.takeDamage(damage);  // assume you have takeDamage logic that applies shield, armor, HP
     
             // Show attack result
-            JOptionPane.showMessageDialog(this, attacker.getName() + " attacks " + target.getName() + "!\nDamage: " + damage + "\n" + target.getName() + " has " + target.getHP().getCurrent() + " HP remaining.", "Combat Log", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                attacker.getName() + " dealt " + damage + " damage to " + target.getName() + ".");
     
+            updateStatDisplay(selectedCombatant);  // refresh attacker's stats
+
             // Remove defeated combatants
             if (target.isDefeated()) {
                 combatants.remove(target);
                 JOptionPane.showMessageDialog(this, target.getName() + " has been defeated!", "Combat Log", JOptionPane.INFORMATION_MESSAGE);
             }
-    
-            updateInitiativeList();
 
+            updateInitiativeList();                // refresh full list
+    
         } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Invalid damage value!", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Invalid damage value!");
         }
     }
 
@@ -335,7 +345,7 @@ public class CombatFrame extends JFrame {
             return; //dont load any UI
         }
 
-        selectedCombatant = combatant;
+        // selectedCombatant = combatant;
 
         //dynamically generate this statPanel each time: 
         statsPanel.removeAll();
@@ -344,20 +354,20 @@ public class CombatFrame extends JFrame {
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         // Name label (row 0)
-        nameLabel.setText("Name: " + selectedCombatant.getName());
+        nameLabel.setText("Name: " + combatant.getName());
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 2;
         statsPanel.add(nameLabel, gbc);
 
         // Armour Label (row 1)
-        armourLabel.setText("Armour: " + selectedCombatant.getTotalAC() + "/" + selectedCombatant.getTotalMaxAC()+ " | Shielding: " + selectedCombatant.getTotalShield());
+        armourLabel.setText("Armour: " + combatant.getTotalAC() + "/" + combatant.getTotalMaxAC()+ " | Shielding: " + combatant.getTotalShield());
         gbc.gridy++;
         statsPanel.add(armourLabel, gbc);
 
         // Shield bar panel (row 2 left), Shield total label (row 2 right)
         shieldPanel.removeAll();
-        Stack<Statistic> shields = selectedCombatant.getShield();
+        Stack<Statistic> shields = combatant.getShield();
         for (int i = shields.size() - 1; i >= 0; i--) {
             Statistic s = shields.get(i);
             if (s.getCurrent() > 0) {
@@ -375,12 +385,12 @@ public class CombatFrame extends JFrame {
         statsPanel.add(shieldPanel, gbc);
 
         gbc.gridx = 1;
-        shieldLabel.setText("Shield: " + selectedCombatant.getTotalShield());
+        shieldLabel.setText("Shield: " + combatant.getTotalShield());
         statsPanel.add(shieldLabel, gbc);
 
         // Armour bar panel (row 3 left), Armour label (row 3 right)
         armourPanel.removeAll();
-        Stack<Statistic> armours = selectedCombatant.getArmour();
+        Stack<Statistic> armours = combatant.getArmour();
         for (int i = armours.size() - 1; i >= 0; i--) {
             Statistic s = armours.get(i);
             JProgressBar bar = new JProgressBar(0, s.getMax());
@@ -396,33 +406,33 @@ public class CombatFrame extends JFrame {
         statsPanel.add(armourPanel, gbc);
         
         gbc.gridx = 1;
-        acLabel.setText("AC: " + selectedCombatant.getTotalAC() + "/" + selectedCombatant.getTotalMaxAC());
+        acLabel.setText("AC: " + combatant.getTotalAC() + "/" + combatant.getTotalMaxAC());
         statsPanel.add(acLabel, gbc);
     
         // Overheal (row 4)
         gbc.gridy++;
         gbc.gridx = 0;
-        overhealhpBar.setMaximum(selectedCombatant.getOverheal());
-        overhealhpBar.setValue(selectedCombatant.getOverheal()); 
+        overhealhpBar.setMaximum(combatant.getOverheal());
+        overhealhpBar.setValue(combatant.getOverheal()); 
         overhealhpBar.setStringPainted(true);
         overhealhpBar.setString("Overheal (+)");
         statsPanel.add(overhealhpBar, gbc);
 
         gbc.gridx = 1;
-        overhealhpLabel.setText("Overheal: " + selectedCombatant.getOverheal());
+        overhealhpLabel.setText("Overheal: " + combatant.getOverheal());
         statsPanel.add(overhealhpLabel, gbc);
 
         // HP (row 5)
         gbc.gridy++;
         gbc.gridx = 0;
-        hpBar.setMaximum(selectedCombatant.getHP().getMax()); 
-        hpBar.setValue(selectedCombatant.getHP().getCurrent());
+        hpBar.setMaximum(combatant.getHP().getMax()); 
+        hpBar.setValue(combatant.getHP().getCurrent());
         hpBar.setStringPainted(true);
         hpBar.setString("HP");
         statsPanel.add(hpBar, gbc);
 
         gbc.gridx = 1;
-        hpLabel.setText("HP: " + selectedCombatant.getHP().getCurrent() + "/" + selectedCombatant.getHP().getMax());
+        hpLabel.setText("HP: " + combatant.getHP().getCurrent() + "/" + combatant.getHP().getMax());
         statsPanel.add(hpLabel, gbc);
 
 
@@ -435,32 +445,71 @@ public class CombatFrame extends JFrame {
     private void updateInitiativeList() {
         initiativeListModel.clear();
         Collections.sort(combatants, Comparator.comparingInt(Combatant::getInitiative).reversed());
-    
-        for (int i = 0; i < combatants.size(); i++) {
-            Combatant c = combatants.get(i); 
-            String marker = (i == turnIndex ? "=> " : " "); 
-            String display = marker + c.getName() +
-                            " (Init: " + c.getInitiative() + 
-                            ", HP: " + c.getHP().getCurrent() + "/" + c.getHP().getMax() + " (overheal HP: +" + c.getOverheal() +
-                            ", MP: " + c.getMP().getCurrent() + "/" + c.getMP().getMax() +
-                            ", AP: " + c.getAP().getCurrent() + "/" + c.getAP().getMax() +
-                            ", AC: " + c.getTotalAC() + "/" + c.getTotalMaxAC() + 
-                            ", Shield: " + c.getTotalShield() + ")";
 
-            initiativeListModel.addElement(display);
+        DefaultListModel<Combatant> listModel = new DefaultListModel<>();
+        for (Combatant c : combatants) {
+            listModel.addElement(c);
         }
+        initiativeList.setModel(listModel);
+    
+        // Custom cell renderer to show marker
+        initiativeList.setCellRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                Component comp = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        
+                if (value instanceof Combatant c) {
+                    // Count how many combatants share this name
+                    long count = combatants.stream().filter(o -> o.getName().equals(c.getName())).count();
+        
+                    // Determine this combatant's order among same-name instances
+                    int instanceNumber = (int) combatants.stream()
+                        .filter(o -> o.getName().equals(c.getName()))
+                        .takeWhile(o -> o != c)
+                        .count() + 1;
 
+                    String instancePart = (count > 1) ? " #" + instanceNumber : "";
+
+                    String prefix = (c == selectedCombatant) ? "→ " : "   ";
+
+                    String label = String.format(
+                        "%s%s%s  [Init: %d | HP: %d/%d | MP: %d/%d | AP: %d/%d | AC: %d/%d | Shielding: %d]",
+                        prefix,
+                        c.getName(),
+                        instancePart,
+                        c.getInitiative(),
+                        c.getHP().getCurrent(),
+                        c.getHP().getMax(),
+                        c.getMP().getCurrent(),
+                        c.getMP().getMax(), 
+                        c.getAP().getCurrent(),
+                        c.getAP().getMax(), 
+                        c.getTotalAC(),
+                        c.getTotalMaxAC(),
+                        c.getTotalShield()
+                    );
+                
+                    setText(label);
+                }
+        
+                return comp;
+            }
+        });
+    
         if (combatants.isEmpty()) {
             selectedCombatant = null;
-            isManuallySelected = false;
             statsPanel.removeAll();
             statsPanel.revalidate();
             statsPanel.repaint();
 
-        } else if (!isManuallySelected) {
-            selectedCombatant = combatants.get(turnIndex);
-            updateStatDisplay(selectedCombatant);
-        }
+        } 
+
+        initiativeList.setSelectedValue(selectedCombatant, true);
+        
+        // else if (!isManuallySelected) {
+        //     selectedCombatant = combatants.get(turnIndex);
+        //     updateStatDisplay(selectedCombatant);
+        // }
     }
     
     private void nextTurn() {
@@ -468,12 +517,12 @@ public class CombatFrame extends JFrame {
             JOptionPane.showMessageDialog(this, "No combatants in the list!", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
-    
+
         // Move to the next combatant
         turnIndex = (turnIndex + 1) % combatants.size();
         turnCount++; 
-        isManuallySelected = false;
-        updateInitiativeList(); // will auto-select current attacker
+        selectedCombatant = combatants.get(turnIndex);
+        initiativeList.setSelectedValue(selectedCombatant, true); // auto-highlight
     
         // if turnIndex = 0 -> new round (because of modulo and circular)
         if (turnIndex == 0) {
@@ -486,10 +535,7 @@ public class CombatFrame extends JFrame {
     
         // Update round and turn display
         roundLabel.setText("Round: " + roundNumber + " | Turn: " + turnCount);
-        updateInitiativeList();
-
-        selectedCombatant = combatants.get(turnIndex); 
-        updateStatDisplay(selectedCombatant);
+        updateInitiativeList(); // will auto-select current attacker
     }
     
     private void resetCombat() {
@@ -593,9 +639,17 @@ public class CombatFrame extends JFrame {
             Combatant c = gson.fromJson(fr, Combatant.class);
             fr.close();
 
-            // editCharacter(c); // opens edit dialog
+            // editCharacter(c); // opens edit dialog        
             combatants.add(c);
+
+            if (combatants.size() == 1) {
+                turnIndex = 0;
+                selectedCombatant = c;
+            }
+            
             updateInitiativeList();
+            updateStatDisplay(selectedCombatant);
+            initiativeList.setSelectedValue(selectedCombatant, true);
         } catch (Exception ex) {
             ex.printStackTrace();
             JOptionPane.showMessageDialog(this, "Failed to load or parse character.");
@@ -837,5 +891,31 @@ public class CombatFrame extends JFrame {
                 JOptionPane.showMessageDialog(this, "Error parsing inputs. Please use valid numeric formats.");
             }
         }
+    }
+}
+
+class CombatantWrapper {
+    Combatant c;
+    List<Combatant> context;
+
+    public CombatantWrapper(Combatant c, List<Combatant> context) {
+        this.c = c;
+        this.context = context;
+    }
+
+    @Override
+    public String toString() {
+        long count = context.stream().filter(o -> o.getName().equals(c.getName())).count();
+
+        if (count <= 1) {     
+            return c.getName();
+        }
+
+        int instanceNumber = (int) context.stream()
+            .filter(o -> o.getName().equals(c.getName()))
+            .takeWhile(o -> o != c)
+            .count() + 1;
+
+        return c.getName() + " #" + instanceNumber;
     }
 }

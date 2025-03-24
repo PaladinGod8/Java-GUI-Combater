@@ -1,5 +1,6 @@
 package app; 
 
+import java.util.Random;
 import java.util.Stack; 
 
 public class Combatant { 
@@ -14,6 +15,20 @@ public class Combatant {
     private Stack<Statistic> shield = new Stack<>(); //index: layer | Statistic.getCurrent() <- value (shield)
     private Stack<Statistic> armour = new Stack<>(); //index: layer | Statistic.getCurrent() <- value (armour)
     private int overhealHitPoints; 
+
+    public Combatant(String name, int maxHP, int maxMP, int maxAP) { 
+        Random rand = new Random(); //if no initiative. roll
+        int minInitiative = 1; 
+        int maxInitiative = 20; 
+
+        int initiative = rand.nextInt(maxInitiative - minInitiative + 1) + minInitiative; 
+
+        this.name = name; 
+        this.initiative = initiative; 
+        this.hitPoints = new Statistic(maxHP); 
+        this.manaPoints = new Statistic(maxMP); 
+        this.actionPoints = new Statistic(maxAP); 
+    }
 
     public Combatant(String name, int initiative, int maxHP, int maxMP, int maxAP) { 
         this.name = name; 
@@ -207,13 +222,9 @@ public class Combatant {
 
     @Override
     public String toString() {
-        String formattedString = "name: %s (Initiative: %d | HP: %d/%d | MP :%d/%d | AP: %d/%d)";
-        String result = String.format(formattedString, name, initiative, this.hitPoints.getCurrent(), this.hitPoints.getMax(), this.manaPoints.getCurrent(), this.manaPoints.getMax(), this.actionPoints.getCurrent(), this.actionPoints.getMax()); 
-        return result; 
+        return name;  // Just name — label logic moves to renderer
     }
 }
-
-
 
 //DRAFT 1: 
 // import java.util.Stack; 
@@ -471,8 +482,11 @@ public class Combatant {
 //         return; 
 //     }
 
-//     @Override
-//     public String toString() {
-//         return name + " (Initiative: " + initiative + ")";
-//     }
+// @Override
+// public String toString() {
+//     return name;  // Just name — label logic moves to renderer
+//     // String formattedString = "%s (Initiative: %d | HP: %d/%d (+%d) | MP :%d/%d | AP: %d/%d | AC: %d/%d | Shielding: %d)";
+//     // String result = String.format(formattedString, name, initiative, this.hitPoints.getCurrent(), this.hitPoints.getMax(), this.getOverheal(), this.manaPoints.getCurrent(), this.manaPoints.getMax(), this.actionPoints.getCurrent(), this.actionPoints.getMax(), this.getTotalAC(), this.getTotalMaxAC(), this.getTotalShield()); 
+//     // return result; 
+// }
 // }
