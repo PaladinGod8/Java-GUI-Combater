@@ -23,6 +23,7 @@ public class CombatFrame extends JFrame {
     private DefaultListModel<Combatant> initiativeListModel;
     private JList<Combatant> initiativeList;
     private ArrayList<Combatant> combatants;
+    private ArrayList<Combatant> downedCombatants;
     private JButton nextTurnButton;
     private int turnIndex = 0; // Tracks whose turn it is
     private int turnCount = 0; 
@@ -58,6 +59,7 @@ public class CombatFrame extends JFrame {
         initiativeListModel = new DefaultListModel<>();
         initiativeList = new JList<>(initiativeListModel);
         combatants = new ArrayList<>();
+        downedCombatants = new ArrayList<>(); 
 
         // Round and Turn Label at the top
         roundLabel = new JLabel("Round: 1 | Turn: 1", SwingConstants.CENTER);
@@ -329,6 +331,7 @@ public class CombatFrame extends JFrame {
 
             // Remove defeated combatants
             if (target.isDefeated()) {
+                downedCombatants.add(target); 
                 combatants.remove(target);
                 JOptionPane.showMessageDialog(this, target.getName() + " has been defeated!", "Combat Log", JOptionPane.INFORMATION_MESSAGE);
             }
@@ -511,6 +514,15 @@ public class CombatFrame extends JFrame {
         
     private void updateInitiativeList() {
         initiativeListModel.clear();
+
+        //if downedCombatants getback up at any point in time: 
+        for (Combatant c : downedCombatants) { 
+            if(c.getHP().getCurrent() > 0) { 
+                downedCombatants.remove(c); 
+                combatants.add(c); 
+            }
+        }
+
         Collections.sort(combatants, Comparator.comparingInt(Combatant::getInitiative).reversed());
 
         DefaultListModel<Combatant> listModel = new DefaultListModel<>();
