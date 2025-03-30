@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Stack;
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicScrollBarUI;
+import java.awt.Color;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -35,7 +36,9 @@ public class CombatFrame extends JFrame {
     private JPanel statsPanel;
 
     private JLabel nameLabel; 
-    private JProgressBar hpBar;
+    private ResourceBar hpBar; 
+    private ResourceBar mpBar; 
+    
     private JProgressBar overhealhpBar; 
     private JLabel hpLabel; 
     private JLabel overhealhpLabel; 
@@ -45,6 +48,10 @@ public class CombatFrame extends JFrame {
 
     private JPanel shieldPanel;
     private JPanel armourPanel;
+
+    private static final Color SHIELD_BAR_COLOR = new Color(77, 121, 255); 
+    private static final Color ARMOUR_BAR_COLOR = new Color(179, 179, 179); 
+    private static final Color OVERHEAL_BAR_COLOR = Color.GREEN; 
 
     private final Map<String, Integer> instanceCounters = new HashMap<>();
     private Combatant selectedCombatant = null;
@@ -115,14 +122,17 @@ public class CombatFrame extends JFrame {
         shieldPanel.setLayout(new BoxLayout(shieldPanel, BoxLayout.Y_AXIS));  
         
         overhealhpBar = new JProgressBar(); 
-        hpBar = new JProgressBar();
+        hpBar = new ResourceBar(); 
 
+        //other resources: 
+        // mpBar = new ResourceBar(); //WIP
+        
         // Add to main window
         add(statsPanel, BorderLayout.EAST);
 
         statsPanel.add(nameLabel); 
         statsPanel.add(hpLabel);
-        statsPanel.add(hpBar);
+        statsPanel.add(hpBar.getBar());
         statsPanel.add(overhealhpLabel);
         statsPanel.add(overhealhpBar);
         statsPanel.add(armourLabel);
@@ -201,8 +211,9 @@ public class CombatFrame extends JFrame {
 
         int option = JOptionPane.showConfirmDialog(this, message, "Add Combatant", JOptionPane.OK_CANCEL_OPTION);
         if (option == JOptionPane.OK_OPTION) {
-            String name = nameField.getText();
             try {
+                String name = nameField.getText().trim();
+
                 Random initiativeRoll = new Random(); 
                 int initiativeMin = 1; 
                 int initiativeMax = 20; 
@@ -228,6 +239,7 @@ public class CombatFrame extends JFrame {
 
                 } catch (NumberFormatException e) {  //catches empty input
                     overheal = 0; 
+
                 }
 
                 combatant.setOverheal(overheal);
@@ -321,7 +333,7 @@ public class CombatFrame extends JFrame {
             } 
 
             spendActionPoint(attacker, -1);
-            target.takeDamage(damage);  // assume you have takeDamage logic that applies shield, armor, HP
+            target.takeDamage(damage);  // assume you have takeDamage logic that applies shield, armour, HP
     
             // Show attack result
             JOptionPane.showMessageDialog(this,
@@ -383,6 +395,7 @@ public class CombatFrame extends JFrame {
             Statistic s = shields.get(i);
             if (s.getCurrent() > 0) {
                 JProgressBar bar = new JProgressBar();
+                bar.setForeground(SHIELD_BAR_COLOR);
                 bar.setValue(100);
                 bar.setStringPainted(true);
                 bar.setString("Shield " + (i + 1) + ": " + s.getCurrent());
@@ -405,6 +418,7 @@ public class CombatFrame extends JFrame {
         for (int i = armours.size() - 1; i >= 0; i--) {
             Statistic s = armours.get(i);
             JProgressBar bar = new JProgressBar(0, s.getMax());
+            bar.setForeground(ARMOUR_BAR_COLOR);
             bar.setValue(s.getCurrent());
             bar.setStringPainted(true);
             bar.setString("Armour " + (i + 1) + ": " + s.getCurrent() + "/" + s.getMax());
@@ -427,6 +441,7 @@ public class CombatFrame extends JFrame {
         overhealhpBar.setValue(combatant.getOverheal()); 
         overhealhpBar.setStringPainted(true);
         overhealhpBar.setString("Overheal (+)");
+        overhealhpBar.setForeground(OVERHEAL_BAR_COLOR);
         statsPanel.add(overhealhpBar, gbc);
 
         gbc.gridx = 1;
@@ -436,11 +451,12 @@ public class CombatFrame extends JFrame {
         // HP (row 5)
         gbc.gridy++;
         gbc.gridx = 0;
-        hpBar.setMaximum(combatant.getHP().getMax()); 
-        hpBar.setValue(combatant.getHP().getCurrent());
-        hpBar.setStringPainted(true);
-        hpBar.setString("HP");
-        statsPanel.add(hpBar, gbc);
+        hpBar.setResource(combatant.getHP(), true); 
+        hpBar.getBar().setStringPainted(true); 
+        hpBar.getBar().setString("HP"); 
+        hpBar.recolor(); 
+
+        statsPanel.add(hpBar.getBar(), gbc); 
 
         gbc.gridx = 1;
         hpLabel.setText("HP: " + combatant.getHP().getCurrent() + "/" + combatant.getHP().getMax());
@@ -457,6 +473,7 @@ public class CombatFrame extends JFrame {
             apScrollPane.setPreferredSize(new Dimension(30, 150)); // less than panel height
             apScrollPane.setBorder(null);                          // optional for clean look
             apScrollPane.getVerticalScrollBar().setOpaque(false);
+            // apScrollPane.setVisible(false); 
 
             // Optional: transparent scrollbar styling
             // apScrollPane.getVerticalScrollBar().setUI(new BasicScrollBarUI() {
@@ -634,7 +651,7 @@ public class CombatFrame extends JFrame {
         JTextField overhealField = new JTextField(); 
         JTextField armourLayersField = new JTextField();  // e.g., "30,20"
         JTextField shieldLayersField = new JTextField(); // e.g., "15,10"
-
+        
         Object[] inputs = {
             "Name: ", nameField,
             "Initiative: ", initiativeField,
@@ -649,13 +666,25 @@ public class CombatFrame extends JFrame {
         int option = JOptionPane.showConfirmDialog(this, inputs, "Create Character", JOptionPane.OK_CANCEL_OPTION);
         if (option == JOptionPane.OK_OPTION) {
             try {
-                Combatant c = new Combatant(
-                    nameField.getText().trim(),
-                    Integer.parseInt(initiativeField.getText()),
-                    Integer.parseInt(hpField.getText()),
-                    Integer.parseInt(mpField.getText()),
-                    Integer.parseInt(apField.getText())
-                );
+                String name = nameField.getText().trim();
+
+                Random initiativeRoll = new Random(); 
+                int initiativeMin = 1; 
+                int initiativeMax = 20; 
+
+                int initiative;
+                try { 
+                    initiative = Integer.parseInt(initiativeField.getText());
+
+                } catch (NumberFormatException e) { //catches empty input and rolls initiative
+                    initiative = initiativeRoll.nextInt(initiativeMax - initiativeMin + 1) + initiativeMin; 
+                }
+
+                int hitPoints = Integer.parseInt(hpField.getText()); 
+                int manaPoints = Integer.parseInt(mpField.getText()); 
+                int actionPoints = Integer.parseInt(apField.getText()); 
+                 
+                Combatant c = new Combatant(name, initiative, hitPoints, manaPoints, actionPoints);
 
                 int overheal; 
                 try { 
@@ -667,14 +696,33 @@ public class CombatFrame extends JFrame {
 
                 c.setOverheal(overheal);
 
-                for (String val : armourLayersField.getText().split(",")) {
-                    val = val.trim();
-                    if (!val.isEmpty()) c.addArmour(Integer.parseInt(val));
+                // Parse and add armour layers
+                //add layers in increasing order (L->R)-> first armour is first layer. 
+                String[] armourValues = armourLayersField.getText().split(",");
+                List<String> armourValuesList = Arrays.asList(armourValues); 
+                Collections.reverse(armourValuesList); //reverse the array. 
+        
+                for (String value : armourValuesList) {
+                    value = value.trim();
+                    if (!value.isEmpty()) {
+                        int armourMax = Integer.parseInt(value);
+                        c.addArmour(armourMax);
+                    }
                 }
 
-                for (String val : shieldLayersField.getText().split(",")) {
-                    val = val.trim();
-                    if (!val.isEmpty()) c.addShield(Integer.parseInt(val));
+                // Parse and add shield layers
+                //add layers in increasing order (L->R) -> first shield is first layer. 
+                String[] shieldValues = shieldLayersField.getText().split(",");
+                List<String> shieldValuesList = Arrays.asList(shieldValues); 
+                Collections.reverse(shieldValuesList); //reverse the array. 
+                for (String value : shieldValuesList) {
+                    value = value.trim();
+                    if (!value.isEmpty()) {
+                        int shieldCurrent = Integer.parseInt(value);
+                        if (shieldCurrent > 0) {
+                            c.addShield(shieldCurrent);
+                        }
+                    }
                 }
 
                 File dir = new File("characters");
@@ -687,6 +735,7 @@ public class CombatFrame extends JFrame {
                 JOptionPane.showMessageDialog(this, "Saved " + c.getName() + " to characters/");
 
             } catch (Exception ex) {
+                ex.printStackTrace(); //DEBUG
                 JOptionPane.showMessageDialog(this, "Invalid input!", "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
@@ -715,7 +764,7 @@ public class CombatFrame extends JFrame {
         try {
             Gson gson = new Gson();
             FileReader fr = new FileReader(new File(dir, choice));
-            Combatant c = gson.fromJson(fr, Combatant.class);
+            Combatant c = gson.fromJson(fr, Combatant.class); 
             fr.close();
 
             // editCharacter(c); // opens edit dialog        
@@ -729,6 +778,7 @@ public class CombatFrame extends JFrame {
             updateInitiativeList();
             updateStatDisplay(selectedCombatant);
             initiativeList.setSelectedValue(selectedCombatant, true);
+
         } catch (Exception ex) {
             ex.printStackTrace();
             JOptionPane.showMessageDialog(this, "Failed to load or parse character.");
@@ -762,7 +812,7 @@ public class CombatFrame extends JFrame {
         if (selected != null) {
             try {
                 FileReader fr = new FileReader(new File(dir, selected));
-                Combatant c = new Gson().fromJson(fr, Combatant.class);
+                Combatant c = new Gson().fromJson(fr, Combatant.class); 
                 fr.close();
     
                 editCharacter(c); // Use your upgraded editor
@@ -999,6 +1049,136 @@ class CombatantWrapper {
     }
 }
 
+class ResourceBar { 
+    private JProgressBar bar; 
+    private Statistic resource; 
+
+    //colors to change bar color:
+    private double low; 
+    private Color lowColor; 
+    private double mid; 
+    private Color midColor; 
+    private double high; 
+    private Color highColor; 
+
+    public ResourceBar(Statistic r) { 
+        this.resource = r;
+        this.bar = new JProgressBar(); 
+        
+        //default bar colors for HP <- change accordingly. 
+        this.low = 0.25;
+        this.lowColor = Color.RED;
+        this.mid = 0.50; 
+        this.midColor = Color.ORANGE; 
+        this.high = 1.00;
+        this.highColor = Color.GREEN; 
+    }
+
+    //surrogate to be replaced later.
+    public ResourceBar() { 
+        this(new Statistic(20)); 
+    }
+
+    public Statistic getResource() { 
+        return this.resource;
+    }
+
+    public void setResource(Statistic newResource, boolean editBar) { 
+        this.resource = newResource; 
+
+        //edit the bar:
+        if(editBar) { 
+            this.bar.setMaximum(newResource.getMax());
+            this.bar.setValue(newResource.getCurrent());
+        }
+    }
+
+    public JProgressBar getBar() { 
+        return this.bar;
+    }
+
+    public void setBar(JProgressBar newBar) { 
+        this.bar = newBar; 
+    }
+
+    public double getLowPercentageValue() { 
+        return this.low;
+    }
+
+    public Color getLowColor() { 
+        return this.lowColor;
+    }
+
+    public void setLowPercentageValue(double newLow) { 
+        this.low = newLow; 
+    }
+
+    public void setLowColor(Color newColor) { 
+        this.lowColor = newColor; 
+    }
+
+    public double getMidPercentageValue() { 
+        return this.mid;
+    }
+
+    public Color getMidColor() { 
+        return this.midColor;
+    }
+
+    public void setMidPercentageValue(double newMid) { 
+        this.mid = newMid; 
+    }
+
+    public void setMidColor(Color newColor) { 
+        this.midColor = newColor; 
+    }
+
+    public double getHighPercentageValue() { 
+        return this.high;
+    }
+
+    public Color getHighColor() { 
+        return this.highColor;
+    }
+
+    public void setHighPercentageValue(double newHigh) { 
+        this.high = newHigh; 
+    }
+
+    public void setHighColor(Color newColor) { 
+        this.highColor = newColor; 
+    }
+
+    public void setNewBarColors(Color lowColor, Color midColor, Color highColor) { 
+        this.lowColor = lowColor; 
+        this.midColor = midColor; 
+        this.highColor = highColor; 
+
+    }
+
+    public void setNewBarPercentageThresholds(double newLow, double newMid, double newHigh) { 
+        this.low = newLow; 
+        this.mid = newMid; 
+        this.high = newHigh;
+         
+    }
+
+    public void recolor() { 
+        double percentage = this.bar.getPercentComplete(); //instead of getting the values from statistics outright - but it does mirror.
+
+        if(percentage <= this.low) {
+            this.bar.setForeground(this.lowColor);
+
+        //logic can be edited - but default is "<"
+        } else if (percentage < this.mid ) { 
+            this.bar.setForeground(this.midColor);
+
+        } else { 
+            this.bar.setForeground(this.highColor);
+        }
+    }
+}
+
 class APMeterPanel extends JPanel {
     private Statistic AP; 
 
@@ -1028,9 +1208,11 @@ class APMeterPanel extends JPanel {
         int totalSpacing = spacing * (max - 1);
         int diameter = Math.max(6, (availableHeight - totalSpacing) / max); // never go smaller than 6px
 
+        Color lightGreen = new Color(153, 255, 51);
+
         for (int i = 0; i < max; i++) {
             int y = i * (diameter + spacing);
-            g.setColor(i < max - cur ? Color.GRAY : Color.GREEN); //spent or available 
+            g.setColor(i < max - cur ? Color.GRAY : lightGreen); //spent or available 
             g.fillOval((getWidth() - diameter) / 2, y, diameter, diameter);
         }
     }

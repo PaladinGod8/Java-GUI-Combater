@@ -3,6 +3,12 @@ package app;
 import java.util.Random;
 import java.util.Stack; 
 
+/**
+ * Class used to store all data about Combatants in a Combat Encounter to be put into CombatFrame.
+ * 
+ * @author PaladinGod8
+ * @since version 1.0
+ */
 public class Combatant { 
     private String name; 
     private int initiative; 
@@ -17,7 +23,7 @@ public class Combatant {
     private int overhealHitPoints; 
 
     public Combatant(String name, int maxHP, int maxMP, int maxAP) { 
-        Random rand = new Random(); //if no initiative. roll
+        Random rand = new Random(); //if no initiative. roll it
         int minInitiative = 1; 
         int maxInitiative = 20; 
 
@@ -39,102 +45,267 @@ public class Combatant {
 
     }
 
+    /** 
+     * getter method for initiative
+     * 
+     * @return The initiative value of the combatant
+     * @since version 1.0
+     */
     public int getInitiative() { 
         return initiative; 
     }
 
+    /** 
+     * setter method for initiative
+     * 
+     * @param setValue The initiative value you wish to set this combatant to
+     * @since version 1.0
+     */
     public void setInitiative(int setValue) { 
         this.initiative = setValue;
     }
 
+    /** 
+     * getter method for name
+     * 
+     * @return The name of the combatant
+     * @since version 1.0
+     */
     public String getName() { 
         return this.name; 
     }
 
+    /** 
+     * getter method for HP 
+     * 
+     * @return The HP of the combatant as a Statistic
+     * @since version 1.0
+     */
     public Statistic getHP() { 
         return this.hitPoints; 
     }
 
+    /** 
+     * getter method for MP
+     * 
+     * @return The MP of the combatant as a Statistic
+     * @since version 1.0
+     */
     public Statistic getMP() { 
         return this.manaPoints; 
     }
 
+    /** 
+     * getter method for AP
+     * 
+     * @return The AP of the combatant as a Statistic
+     * @since version 1.0
+     */
     public Statistic getAP() { 
         return this.actionPoints; 
         
     }
 
+    /** 
+     * getter method for trueAC
+     * 
+     * @return The trueAC of the combatant as an integer
+     * @since version 1.0
+     */
     public int getTAC() { 
         return this.trueAC; 
     }
 
+    /** 
+     * setter method for trueAC
+     * 
+     * @param setValue The trueAC you wish to set as the trueAC of this combatant
+     * @since version 1.0
+     */
     public void setTAC(int setValue) { 
         this.trueAC = setValue; 
     }
 
+    /**
+     * method used to modify the trueAC value by the specified input. 
+     * e.g. modifyTAC(-1) to trueAC = 12 means that tAC: 12 -> tAC: 11. 
+     * 
+     * @param value The value you want to modify the value of trueAC by.
+     * @since version 1.0
+     */
     public void modifyTAC(int value) { 
         this.trueAC += value;
     }
 
+    /**
+     * method used to add a Shield Layer to the combatant
+     * e.g. 
+     * before addShield(10):
+     * Layer 1: 10
+     * 
+     * after addShield(10): 
+     * Layer 1: 10 <- shield added here - pushed onto the shield Stack. 
+     * Layer 2: 10
+     * 
+     * @param value The value of the shield layer added.
+     * @since version 1.0
+     */
     public void addShield(int value) { 
         this.shield.push(new Statistic(0, value));     //no max 
     }
 
+    /**
+     * getter method to obtain shield as a Stack<Statistic>
+     * 
+     * return cloned Stack<Statistic> to prevent direct mutation
+     * 
+     * @return The shield as a Stack<Statistic>
+     * @since version 1.0
+     */
     @SuppressWarnings("unchecked") 
     public Stack<Statistic> getShield() { 
         return (Stack<Statistic>) this.shield.clone(); //prevent direction mutation
     }
 
+    /**
+     * setter method to set a completely new shield in Stack<Statistic> form as this combatant's shield layers.
+     * 
+     * @param newShield The new shield to be used to store all Shield Layers for the Combatant 
+     * @since version 1.0
+     */
     public void setShield(Stack<Statistic> newShield) { 
         this.shield = newShield; 
     }
 
+    /**
+     * method used to calculate and return the total amount of shielding provided by all shield layers for a given combatant.
+     * 
+     * @return Total amount of shielding provided by all shield layers of the combatant
+     * @since version 1.0
+     */
     public int getTotalShield() { 
         return getShield().stream().mapToInt(Statistic::getCurrent).sum();
     }
 
+    /**
+     * method used to add a Armour Layer to the combatant
+     * e.g. 
+     * before addArmour(20):
+     * Layer 1: 10
+     * 
+     * after addShield(20): 
+     * Layer 1: 20 <- Armour added here - pushed onto the armour Stack. 
+     * Layer 2: 10
+     * 
+     * @param maxValue The maximum value of the armour layer added - it will intialise to e.g. maxValue = 20 -> 20/20.
+     * @since version 1.0
+     */
     public void addArmour(int maxValue) { 
         this.armour.push(new Statistic(maxValue));     //no max
     }
 
+    /**
+     * getter method to obtain armour as a Stack<Statistic>
+     * 
+     * return cloned Stack<Statistic> to prevent direct mutation
+     * 
+     * @return The armour as a Stack<Statistic>
+     * @since version 1.0
+     */
     @SuppressWarnings("unchecked") 
     public Stack<Statistic> getArmour() { 
         return (Stack<Statistic>) this.armour.clone(); //prevent direction mutation
     }
 
+    /**
+     * setter method to set a completely new armour in Stack<Statistic> form as this combatant's armour layers.
+     * 
+     * @param newShield The new armour to be used to store all Armour Layers for the Combatant 
+     * @since version 1.0
+     */
     public void setArmour(Stack<Statistic> newArmour) { 
         this.armour = newArmour; 
     }
 
+    /**
+     * method used to calculate and return the total amount of current armour provided by all armour layers for a given combatant.
+     * 
+     * @return Total amount of current armour provided by all armour layers of the combatant. i.e, the amount of damage armour can take before reaching overheal and HP
+     * @since version 1.0
+     */
     public int getTotalAC() { 
         return getArmour().stream().mapToInt(Statistic::getCurrent).sum();
     }
 
+    /**
+     * method used to calculate and return the total amount of maximum armour provided by all armour layers for a given combatant.
+     * 
+     * @return Total amount of maximum armour provided by all armour layers of the combatant.
+     * @since version 1.0
+     */
     public int getTotalMaxAC() { 
         return getArmour().stream().mapToInt(Statistic::getMax).sum();
     }
 
+    /** 
+     * getter method for overheal HP
+     * 
+     * @return The overheal HP of the combatant as an integer
+     * @since version 1.0
+     */
     public int getOverheal() { 
         return this.overhealHitPoints; 
     }
-
+    
+    /** 
+     * setter method for overheal HP
+     * 
+     * @param setValue The overheal HP you wish to set as the overheal HP of this combatant
+     * @since version 1.0
+     */
     public void setOverheal(int setValue) { 
         this.overhealHitPoints = setValue; 
     }
 
+    /**
+     * method used to modify the overheal HP value by the specified input. 
+     * e.g. modifyOverheal(-1) to overheal = 20 means that overheal: 20 -> overheal: 19. 
+     * 
+     * @param value The value you want to modify the value of overheal HP by.
+     * @since version 1.0
+     */
     public void modifyOverheal(int value) { 
         this.overhealHitPoints += value; 
     }
 
+    /**
+     * overloaded method of takeDamage() that specifies only purely damage. 
+     * 
+     * it is assumed that this means there is no armour penetration. 
+     * 
+     * @param damage The amount of initial damage received by the combatant. 
+     * @since version 1.0
+     */
     public void takeDamage(int damage) { 
         takeDamage(damage, 0.0); 
     }
 
-    //0. Damage Reduction (e.g. TrueAC, Resistances, etc.)
-    //1. Shields
-    //2. Armour Layers
-    //3. Overheal
-    //4. HP
+    /**
+     * primary method of takeDamage() that specifies both damage and armour penetration.
+     * 
+     * this method is used to modify the Health Layers of a given combatant in the following order: 
+     * 0. Damage Reduction (via e.g. TrueAC, Layer-0 Resistances, etc.) 
+     * 1. Shield Layers (from Top-to-Bottom Layer - ignored by ArmourPenetration if it used)
+     * 2. Armour Layers (from Top-to-Bottom Layer - ignored by ArmourPenetration if it used)
+     * 3. Overheal (Overheal HP - set to 0 if ArmourPenetration is used)
+     * 4. HP (normal curHP/maxHP - directly affected by ArmourPenetration if it is used)
+     * 
+     * Damage overflows from Shield Layer -> Armour Layer -> Overheal HP -> HP unless otherwise specified.
+     * 
+     * @param damage The amount of initial damage received by the combatant. 
+     * @param armourPenetration the percentage of damage that penetrates armour and shield
+     * @since version 1.0
+     */
     public void takeDamage(int damage, double armourPenetration) { 
         //handle trueAC:
         int damageAfterReduction = damage - this.trueAC; 
@@ -226,262 +397,9 @@ public class Combatant {
     }
 }
 
-//DRAFT 1: 
-// import java.util.Stack; 
-
-// public class Combatant {
-//     private String name;
-//     private int initiative;
-//     private boolean isMyTurn; 
-
-//     //primary statistics: 
-//     private Statistic hitPoints; 
-//     private Statistic manaPoints; 
-//     private Statistic actionPoints; 
-
-//     //damage reduction
-//     private int trueAC; 
-
-//     //health layers: 
-//     private int overhealHitPoints; 
-
-//     //index = layer ; armourValue (AC)
-//     private Stack<Statistic> armour; 
-
-//     //index = layer ; shieldValue is in int
-//     private Stack<Integer> shield; 
-
-//     public Combatant(String name, int initiative) {
-//         this.name = name;
-//         this.initiative = initiative;
-//     }
-
-//     public int getInitiative() {
-//         return initiative;
-//     }
-    
-//     public int damageToShield(int damage) { 
-//         int damageOnFirstShield = damage - shield.peek().intValue(); 
-//         int shieldHealth = shield.peek().intValue() - damage; 
-//         int shieldLastIndex = shield.size() - 1; 
-
-//         if(shieldHealth <= 0) { 
-//             shield.pop(); 
-//         }
-
-//         if(damageOnFirstShield <= 0) { 
-//             return 0; 
-//         }
-
-//         Integer tempIntOne = shieldHealth; 
-
-//         shield.set(shieldLastIndex, shieldHealth); 
-//         int damageToShieldLayer = damageOnFirstShield; 
-
-//         for (int i = shieldLastIndex - 1 ; i > 0 ; i--) { 
-//             int currentShieldLayerHealth = shield.peek().intValue() - damageToShieldLayer; 
-
-//             damageToShieldLayer -= shield.peek().intValue(); 
-
-//             if(currentShieldLayerHealth <= 0) { 
-//                 shield.pop(); 
-
-//             }
-
-//             if(damageToShieldLayer <= 0) { 
-//                 return 0; 
-
-//             } else { 
-//                 Integer tempIntTwo = currentShieldLayerHealth; 
-//                 shield.set(i, tempIntTwo); 
-
-//                 return 0; 
-//             }
-//         }
-
-//         return damageToShieldLayer; 
-//     }
-
-//     public int damageToArmour(int damage) { 
-//         int damageOnFirstAC = damage - armour.peek().getCurrent(); 
-//         int armourHealth = armour.peek().getCurrent() - damage; 
-//         int armourLastIndex = armour.size() - 1; 
-
-//         if(armourHealth <= 0) { 
-//             armour.pop(); 
-//         }
-
-//         if(damageOnFirstAC <= 0) { 
-//             return 0; 
-//         }
-
-//         Statistic firstArmourLayer = armour.get(armourLastIndex); 
-//         firstArmourLayer.setCurrent(armourHealth); 
-//         shield.set(armourLastIndex, firstArmourLayer); 
- 
-//         int damageToArmourLayer = damageOnFirstAC; 
-
-//         for (int i = shieldLastIndex - 1 ; i > 0 ; i--) { 
-//             int currentArmourLayerHealth = armour.peek().getCurrent() - damageToArmourLayer; 
-
-//             damageToArmourLayer -= armour.peek().getCurrent(); 
-
-//             if(currentArmourLayerHealth <= 0) { 
-//                 shield.pop(); 
-
-//             }
-
-//             if(damageToArmourLayer <= 0) { 
-//                 return 0; 
-
-//             } else { 
-//                 Statistic currentArmour = armour.get(i); 
-//                 currentArmour.setCurrent(currentArmourLayerHealth);
-//                 shield.set(i, currentArmour); 
-
-//                 return 0; 
-//             }
-//         }
-
-//         return damageToArmourLayer; 
-//     }
-
-//     public void takeDamage(int damage, double armourPenetration) { 
-//         //go through TrueAC and DamageReduction first: 
-//         int initialDamage = damage - trueAC; 
-
-//         if(initialDamage <= 0) { 
-//             return; 
-//         }
-
-//         if(armourPenetration > 0) { 
-//             overhealHitPoints = 0; 
-//         }
-        
-//         int directDamageToHealth = (int)(initialDamage * armourPenetration); 
-//         int damageThroughHealthLayers = (int)(initialDamage * (armourPenetration - 1)); 
-
-//         takeDamage(damageThroughHealthLayers); 
-//     }
-
-//     private void takeDamage(int damage) {    
-//         //1. Shield Layers
-//         //2. Armour Layers
-//         //3. Overheal
-//         //4. HP
-        
-//         //shield layers:
-//         int remainingDamageFromShield = damageToShield(damage); 
- 
-//         if(remainingDamageFromShield <= 0) { 
-//             return; 
-//         }
-
-//         //armour layers:
-//         int remainingDamageFromAC = damageToArmour(remainingDamageFromShield); 
- 
-//         if(remainingDamageFromAC <= 0) { 
-//             return; 
-//         }
-
-//         //overheal: 
-//         int overhealAfterDamage = overhealHitPoints - remainingDamageFromAC; 
-//         if(overhealAfterDamage <= 0) { 
-//             overhealHitPoints = 0;
-
-//         } else { 
-//             overhealHitPoints = overhealAfterDamage; 
-//             return; 
-
-//         }
-
-//         //HP: 
-//         hitPoints.modifyCurrent(overhealAfterDamage);
 
 
-//     }
-
-//     public void setMyTurn(boolean turnStatus) { 
-//         this.isMyTurn = turnStatus; 
-//         return; 
-//     }
-
-//     //HP:
-//     public Statistic getHP() { 
-//         return this.hitPoints; 
-//     }
-
-//     public void setCurHP(int setValue) { 
-//         this.hitPoints.setCurrent(setValue);
-//         return; 
-//     }
-
-//     public void setMaxHP(int setValue) { 
-//         this.hitPoints.setCurrent(setValue);
-//         return; 
-//     }
-
-//     //MP:
-//     public Statistic getMP() { 
-//         return this.manaPoints; 
-//     }
-
-//     public void setCurMP(int setValue) { 
-//         this.manaPoints.setCurrent(setValue);
-//         return; 
-//     }
-
-//     public void setMaxMP(int setValue) { 
-//         this.manaPoints.setCurrent(setValue);
-//         return; 
-//     }    
-
-//     //AP: 
-//     public Statistic getAP() { 
-//         return this.actionPoints; 
-//     }
-
-//     public void setCurAP(int setValue) { 
-//         this.actionPoints.setCurrent(setValue);
-//         return; 
-//     }
-
-//     public void setMaxAP(int setValue) { 
-//         this.actionPoints.setCurrent(setValue);
-//         return; 
-//     }    
-
-//     public int getAC() { 
-//         int totalAC = 0;
-//         for(int i = this.armour.size() ; i > 0 ; i--) { 
-//             totalAC += armour.get(i).getCurrent(); 
-//         }
-
-//         return totalAC; 
-//     }
-
-//     public void setCurACForLayer(int layer, int setValue) { 
-//         this.armour.get(layer).setCurrent(setValue);
-//         return; 
-//     }
-
-//     public void setMaxACForLayer(int layer, int setValue) { 
-//         this.armour.get(layer).setMax(setValue);
-//         return; 
-//     }
-
-//     public void modifyACForLayer(int layer, int value) { 
-//         Statistic currentAC = this.armour.get(layer);
-
-//         int currentACValue = currentAC.getCurrent();
-//         currentACValue += value; 
-
-//         currentAC.setCurrent(currentACValue); 
-//         this.armour.set(layer, currentAC); 
-
-//         return; 
-//     }
-
+// LEGACY toString() Method: 
 // @Override
 // public String toString() {
 //     return name;  // Just name — label logic moves to renderer
