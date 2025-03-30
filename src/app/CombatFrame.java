@@ -37,7 +37,7 @@ public class CombatFrame extends JFrame {
 
     private JLabel nameLabel; 
     private ResourceBar hpBar; 
-    private ResourceBar mpBar; 
+    // private ResourceBar mpBar; //WIP
     
     private JProgressBar overhealhpBar; 
     private JLabel hpLabel; 
@@ -254,7 +254,9 @@ public class CombatFrame extends JFrame {
                     value = value.trim();
                     if (!value.isEmpty()) {
                         int armourMax = Integer.parseInt(value);
-                        combatant.addArmour(armourMax);
+                        if(armourMax >= 0) { 
+                            combatant.addArmour(armourMax);
+                        }
                     }
                 }
 
@@ -470,7 +472,7 @@ public class CombatFrame extends JFrame {
             JScrollPane apScrollPane = new JScrollPane(apMeter, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
             // apScrollPane.setViewportView(apMeter);
             apScrollPane.setWheelScrollingEnabled(true);
-            apScrollPane.setPreferredSize(new Dimension(30, 150)); // less than panel height
+            apScrollPane.setPreferredSize(new Dimension(40, 150)); // less than panel height <- also, adjust width to just make it better... (b ; - ;)b 
             apScrollPane.setBorder(null);                          // optional for clean look
             apScrollPane.getVerticalScrollBar().setOpaque(false);
             // apScrollPane.setVisible(false); 
@@ -706,7 +708,9 @@ public class CombatFrame extends JFrame {
                     value = value.trim();
                     if (!value.isEmpty()) {
                         int armourMax = Integer.parseInt(value);
-                        c.addArmour(armourMax);
+                        if(armourMax >= 0) { 
+                            c.addArmour(armourMax);
+                        }
                     }
                 }
 
@@ -1180,6 +1184,8 @@ class ResourceBar {
 }
 
 class APMeterPanel extends JPanel {
+    private static final Color AP_METER_COLOR = new Color(153, 255,51);
+
     private Statistic AP; 
 
     public APMeterPanel(Statistic AP) {
@@ -1208,11 +1214,9 @@ class APMeterPanel extends JPanel {
         int totalSpacing = spacing * (max - 1);
         int diameter = Math.max(6, (availableHeight - totalSpacing) / max); // never go smaller than 6px
 
-        Color lightGreen = new Color(153, 255, 51);
-
         for (int i = 0; i < max; i++) {
             int y = i * (diameter + spacing);
-            g.setColor(i < max - cur ? Color.GRAY : lightGreen); //spent or available 
+            g.setColor(i < max - cur ? Color.GRAY : AP_METER_COLOR); //spent or available 
             g.fillOval((getWidth() - diameter) / 2, y, diameter, diameter);
         }
     }
