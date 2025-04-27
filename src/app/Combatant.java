@@ -22,6 +22,45 @@ public class Combatant {
     private Stack<Statistic> armour = new Stack<>(); //index: layer | Statistic.getCurrent() <- value (armour)
     private int overhealHitPoints; 
 
+    private String tokenImagePath; 
+
+    // private int currentSpeedSpent; 
+    // private Map<String, Integer> movementSpeeds; 
+
+    // private int x_coordinate;
+    // private int y_coordinate; //vertical coordinate
+    // private int z_coordinate; 
+    // private int elevation;    //relative to 0m on each individual combat terrain
+    
+    // private int hoverDuration; 
+    // private boolean isHovering; 
+    // private int turnsSpentFalling; 
+    // private int fallHeightPerTurn; 
+    
+    // private int effectiveWeight; 
+    
+
+    //TODO: for movement feature later on: 
+    /* 
+     * private Statistic basicMovementSpeed; 
+     * private Statistic currentUsedSpeed; 
+     * private List<Statistic> uniqueMovementSpeeds; 
+     * 
+     * private int x_coordinate; 
+     * private int y_coordinate;
+     * private int z_coordinate; 
+     * private int elevation;  
+     * private int movementSPDspent = 0; 
+     * 
+     * private Statistic hoverDuration;    // ticks upwards until max is reached -> once reached - stop hovering unless replenish 
+     * private boolean isHoveringState;    //always considered hovering while moving via FLYSPD. but once FLYSPD on turn all used - rely on hoverDuration else fall. 
+     * 
+     * private int turnsSpentFalling;      //every turn is 10s. So. All 10s x number of Turns spent falling
+     * private int effectiveWeight;        //from inventory + base weight from race etc.
+     * private int fallHeightPerTurn;      //generally 395m / 10s. so... always apply fall damage depending on height and calculation. take 0 damage if within falling threshold. 
+     * 
+     */
+
     public Combatant(String name, int maxHP, int maxMP, int maxAP) { 
         Random rand = new Random(); //if no initiative. roll it
         int minInitiative = 1; 
@@ -34,6 +73,8 @@ public class Combatant {
         this.hitPoints = new Statistic(maxHP); 
         this.manaPoints = new Statistic(maxMP); 
         this.actionPoints = new Statistic(maxAP); 
+        
+        // this.currentSpeedSpent = 0; 
     }
 
     public Combatant(String name, int initiative, int maxHP, int maxMP, int maxAP) { 
@@ -43,6 +84,7 @@ public class Combatant {
         this.manaPoints = new Statistic(maxMP); 
         this.actionPoints = new Statistic(maxAP); 
 
+        // this.currentSpeedSpent = 0; 
     }
 
     /** 
@@ -278,6 +320,14 @@ public class Combatant {
         this.overhealHitPoints += value; 
     }
 
+    public String getTokenImagePath() {
+        return tokenImagePath;
+    }
+
+    public void setTokenImagePath(String tokenImagePath) {
+        this.tokenImagePath = tokenImagePath;
+    }
+
     /**
      * overloaded method of takeDamage() that specifies only purely damage. 
      * 
@@ -390,6 +440,63 @@ public class Combatant {
     //     this.actionPoints.modifyCurrent(-1);
     //     return damage; 
     // }
+
+    //WIP for movement: 
+    //getter and setter methods for coordinates and elevation etc.
+    // public void move(int amountMoved, String direction) { 
+    //     //WIP - account for 3D/Vertical Movemene etc. 
+
+    //     // movementSPDspent -= amountMoved; 
+    // }
+
+    // public void resetCurrentSpeed() {
+    //     this.currentSpeedSpent = 0; 
+    // }
+
+    // public void move(String movementType, int amountMoved, MovementDirection direction) {
+    //     int currentUsedSpeed += amountMoved; 
+
+    //     movementSpeeds.get(movementType); 
+
+    //     return; 
+    // }
+
+
+    // private int currentSpeedSpent; 
+    // private Map<String, Integer> movementSpeeds; 
+
+    // private int x_coordinate;
+    // private int y_coordinate; //vertical coordinate
+    // private int z_coordinate; 
+    // private int elevation;    //relative to 0m on each individual combat terrain
+    
+    // private int hoverDuration; 
+    // private boolean isHovering; 
+    // private int turnsSpentFalling; 
+    // private int fallHeightPerTurn; 
+    
+    // private int effectiveWeight; 
+
+
+    //when switching speed - do not replenish to full, decrease by max - movementSPDspent already. 
+    // public void switchSpeed(Statistic newlySelectedSpeed) { 
+    //     int newMaxSPD = newlySelectedSpeed.getMax(); 
+    //     this.currentUsedSpeed = newlySelectedSpeed; 
+    //     int newCurSPD = this.currentUsedSpeed.getCurrent() - movementSPDspent; 
+    //     this.currentUsedSpeed.setCurrent(newCurSPD); 
+    // }
+
+    //how much does this combatant fall in 10s (1 turn = 10s) - ticks every turn. 
+    // private static final double gravitationalConstant = 9.8
+    // public void calculateFallHeight() { 
+        
+
+
+    // }
+    //roughly 490m for every turn regardless of mass. 
+    //surface area reduces the fall height. 
+
+    
 
     @Override
     public String toString() {
