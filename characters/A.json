@@ -1,0 +1,21 @@
+{
+  "name": "A",
+  "initiative": 12,
+  "hitPoints": {
+    "maxValue": 1,
+    "curValue": 1
+  },
+  "manaPoints": {
+    "maxValue": 1,
+    "curValue": 1
+  },
+  "actionPoints": {
+    "maxValue": 1,
+    "curValue": 1
+  },
+  "trueAC": 0,
+  "shield": [],
+  "armour": [],
+  "overhealHitPoints": 0,
+  "tokenImagePath": "FALLBACK:A"
+}

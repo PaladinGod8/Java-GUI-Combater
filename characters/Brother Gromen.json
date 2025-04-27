@@ -1,0 +1,51 @@
+{
+  "name": "Brother Gromen",
+  "initiative": 17,
+  "hitPoints": {
+    "maxValue": 500,
+    "curValue": 120
+  },
+  "manaPoints": {
+    "maxValue": 1200,
+    "curValue": 1200
+  },
+  "actionPoints": {
+    "maxValue": 12,
+    "curValue": 12
+  },
+  "trueAC": 0,
+  "shield": [
+    {
+      "maxValue": 0,
+      "curValue": 50
+    },
+    {
+      "maxValue": 0,
+      "curValue": 40
+    },
+    {
+      "maxValue": 0,
+      "curValue": 30
+    },
+    {
+      "maxValue": 0,
+      "curValue": 20
+    },
+    {
+      "maxValue": 0,
+      "curValue": 10
+    }
+  ],
+  "armour": [
+    {
+      "maxValue": 100,
+      "curValue": 100
+    },
+    {
+      "maxValue": 1000,
+      "curValue": 1000
+    }
+  ],
+  "overhealHitPoints": 10,
+  "tokenImagePath": "FALLBACK:Brother Gromen"
+}

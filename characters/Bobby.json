@@ -1,0 +1,47 @@
+{
+  "name": "Bobby",
+  "initiative": 17,
+  "hitPoints": {
+    "maxValue": 10,
+    "curValue": 10
+  },
+  "manaPoints": {
+    "maxValue": 10,
+    "curValue": 10
+  },
+  "actionPoints": {
+    "maxValue": 3,
+    "curValue": 3
+  },
+  "trueAC": 0,
+  "shield": [
+    {
+      "maxValue": 0,
+      "curValue": 10
+    },
+    {
+      "maxValue": 0,
+      "curValue": 20
+    },
+    {
+      "maxValue": 0,
+      "curValue": 30
+    }
+  ],
+  "armour": [
+    {
+      "maxValue": 30,
+      "curValue": 30
+    },
+    {
+      "maxValue": 20,
+      "curValue": 20
+    },
+    {
+      "maxValue": 10,
+      "curValue": 10
+    }
+  ],
+  "overhealHitPoints": 10,
+  "tokenImagePath": "FALLBACK:Bobby"
+}

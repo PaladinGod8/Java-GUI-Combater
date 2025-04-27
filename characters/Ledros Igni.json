@@ -1,6 +1,6 @@
 {
-  "name": "Ledros",
-  "initiative": 10,
+  "name": "Ledros Igni",
+  "initiative": 7,
   "hitPoints": {
     "maxValue": 100,
     "curValue": 100
@@ -10,14 +10,14 @@
     "curValue": 100
   },
   "actionPoints": {
-    "maxValue": 3,
-    "curValue": 3
+    "maxValue": 7,
+    "curValue": 7
   },
   "trueAC": 0,
   "shield": [
     {
       "maxValue": 0,
-      "curValue": 30
+      "curValue": 10
     },
     {
       "maxValue": 0,
@@ -25,22 +25,23 @@
     },
     {
       "maxValue": 0,
-      "curValue": 10
+      "curValue": 30
     }
   ],
   "armour": [
     {
-      "maxValue": 10,
-      "curValue": 10
+      "maxValue": 30,
+      "curValue": 30
     },
     {
       "maxValue": 20,
       "curValue": 20
     },
     {
-      "maxValue": 30,
-      "curValue": 30
+      "maxValue": 10,
+      "curValue": 10
     }
   ],
-  "overhealHitPoints": 10
+  "overhealHitPoints": 0,
+  "tokenImagePath": "tokens\\ledros_token.png"
 }

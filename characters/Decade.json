@@ -1,0 +1,43 @@
+{
+  "name": "Decade",
+  "initiative": 20,
+  "hitPoints": {
+    "maxValue": 69,
+    "curValue": 69
+  },
+  "manaPoints": {
+    "maxValue": 344,
+    "curValue": 344
+  },
+  "actionPoints": {
+    "maxValue": 5,
+    "curValue": 5
+  },
+  "trueAC": 0,
+  "shield": [
+    {
+      "maxValue": 0,
+      "curValue": 20
+    },
+    {
+      "maxValue": 0,
+      "curValue": 40
+    },
+    {
+      "maxValue": 0,
+      "curValue": 10
+    }
+  ],
+  "armour": [
+    {
+      "maxValue": 100,
+      "curValue": 100
+    },
+    {
+      "maxValue": 200,
+      "curValue": 200
+    }
+  ],
+  "overhealHitPoints": 10,
+  "tokenImagePath": "tokens\\decade_token.png"
+}
